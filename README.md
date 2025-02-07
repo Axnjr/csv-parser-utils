@@ -75,4 +75,4 @@ if __name__ == "__main__":
     run_test3()
 ```
 
-## 🦀 Rust / Go implementation comming soon, Just for fun 💪☺️
+## 🦀 Rust / Go implementation comming soon, just for fun and better performance 💪

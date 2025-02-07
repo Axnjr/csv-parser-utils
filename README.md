@@ -1,8 +1,18 @@
+# `CSV_Utils_Py`
 # Homework task for SWE position at Redhat.
 
-# Usage / test cases
+## Public Methods:
+- `display_csv()`
+- `filter_rows()`
+- `sort_csv()`
+- `aggregate_column()`
+- `count_valid_palindromes()`
+- `write_csv()`
+
+## Usage / test cases
 ```py
 def run_test1():
+
     sample_data = [
         ['Name', 'Age', 'Score'], 
         ['Alice', '23', '85'], 
@@ -11,6 +21,8 @@ def run_test1():
     ]
     test_file = 'sample.csv'
     CSV_Utils_Py.write_csv(test_file, sample_data)
+
+# ------------------------------------------------------------------------------------------------------------------ #
 
 def run_test2():
 
@@ -37,6 +49,8 @@ def run_test2():
     # data = pd.read_csv("python/ppl.csv")
     # print(data.to_string())
 
+# ------------------------------------------------------------------------------------------------------------------ #
+
 def run_test3():
     df = CSV_Utils_Py("python/fruits.csv")
     df.display_csv()
@@ -60,3 +74,5 @@ if __name__ == "__main__":
     run_test2()
     run_test3()
 ```
+
+## 🦀 Rust / Go implementation comming soon, Just for fun 💪☺️

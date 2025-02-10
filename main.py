@@ -13,12 +13,12 @@ class CSV_Utils_Py:
     def __init__(self, file_path: str):
         
         self.file_path = file_path
-
         data = self._load_csv()
 
         self.headers: List[str]       = data[0] 
         self.rows   : List[List[str]] = data[1] 
         self.columns: int             = data[2]
+
 
     def _load_csv(self) -> (List[str], List[List[str]], int): # type: ignore
 
@@ -88,6 +88,12 @@ class CSV_Utils_Py:
 
     def display_csv(self, num_rows: int = 3, add_index_col: bool = False):
 
+        """
+        prints the first `num_rows` of the CSV File
+        :param add_index_col: A boolean to add an extra index column for better data visualization
+        returns void
+        """
+
         if not self.headers:
             print("CSV file is empty!")
             return
@@ -156,6 +162,11 @@ class CSV_Utils_Py:
             output_file_name: str,
             ascending: bool = True
         ) -> List[List[str]]:
+
+        """
+        sorts the specified `column` of the CSV File and updates or creates a new CSV File
+        :param: output_file_name: If given some name, the sorted CSV data would be written in that file
+        """
         
         col_idx = self.get_column_index(column)
 
@@ -167,6 +178,11 @@ class CSV_Utils_Py:
 
 
     def aggregate_column(self, column: str, operation: str):
+
+        """
+        Performs operations like: 'sum', 'min', 'max', 'std'
+        returns float value
+        """
 
         col_idx = self.get_column_index(column)
 
@@ -183,6 +199,8 @@ class CSV_Utils_Py:
             return min(values)
         elif operation == 'max':
             return max(values)
+        elif operation == 'std':
+            return statistics.stdev(values)
         else:
             raise ValueError("Invalid operation. Choose from 'sum', 'avg', 'min', 'max'.")
 
@@ -198,6 +216,7 @@ class CSV_Utils_Py:
             print(f"Data saved to {output_path}")
         except Exception as e:
             print(f"Error writing file: {e}")
+
 
     @staticmethod
     def write_csv(file_path: str, data: List[List[str]]):
@@ -321,6 +340,7 @@ class CSV_Utils_Py:
         self.rows = unique_rows
         self._update_csv(output_file_name, [self.headers] + self.rows, "remove_duplicates()")
 
+
     def summerize(self, preview_rows: int = 3):
 
         """
@@ -368,12 +388,13 @@ class CSV_Utils_Py:
                     unique_values[col_name] += 1
                     column_data[col_name].append(value)
 
-        # data_types = {col: list(types) for col, types in data_types.items()}
+        # ! sets cannot be json serialized so convert sets to lists
+        data_types = {col: list(types) for col, types in data_types.items()}
 
         for col, values in column_data.items():
 
             is_numeric = all(v.replace('.', '', 1).isdigit() for v in values if v)
-            
+
             if is_numeric:
 
                 numeric_values = [float(v) for v in values]
@@ -402,5 +423,5 @@ class CSV_Utils_Py:
             "Last Few Rows": self.rows[-preview_rows:],
         }
 
-        print(json.dumps(summary))
+        print(json.dumps(summary, indent=4))
 

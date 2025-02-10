@@ -135,9 +135,12 @@ class CSV_Utils_Py:
 
         """
         updates / filters the specified rows with given lambda callback
-        column: the column to be filtered
-        condition: the lambda function to apply on column values
-        output_file_name: the current CSV file is updated if not given else a new file is created
+
+        :param: `column`: the column to be filtered
+
+        :param: `condition`: the lambda function to apply on column values
+
+        :param: `output_file_name`: the current CSV file is updated if not given else a new file is created
         """
 
         col_idx = self.get_column_index(column)
@@ -165,7 +168,8 @@ class CSV_Utils_Py:
 
         """
         sorts the specified `column` of the CSV File and updates or creates a new CSV File
-        :param: output_file_name: If given some name, the sorted CSV data would be written in that file
+
+        :param: `output_file_name`: If given some name, the sorted CSV data would be written in that file
         """
         
         col_idx = self.get_column_index(column)
@@ -181,7 +185,10 @@ class CSV_Utils_Py:
 
         """
         Performs operations like: 'sum', 'min', 'max', 'std'
-        returns float value
+
+        :param: `column`: column name on which aggregation will be performed
+        :param: `operation`: "sum" | "min" | "max' | "std"(standard deviation)
+        :return: aggregated float value
         """
 
         col_idx = self.get_column_index(column)

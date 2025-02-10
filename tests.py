@@ -11,11 +11,6 @@ def run_test1():
     test_file = 'sample.csv'
     CSV_Utils_Py.write_csv(test_file, sample_data)
 
-    df = CSV_Utils_Py("./sample.csv")
-    # df.replace_first_val("Name", "Alice", "Radha")
-    df.summerize()
-
-
 def run_test2():
 
     df = CSV_Utils_Py("./ppl.csv")
@@ -59,7 +54,31 @@ def run_test3():
     palindrome_count = df.count_valid_palindromes()
     print("Valid Palindromes Count:", palindrome_count)
 
+def run_test4():
+    
+    df = CSV_Utils_Py("./ppl.csv")
+
+    # replace all "First Name": Shelby to Radha
+    df.replace_all_vals("First Name", "Shelby", "Radha")
+
+    # removes duplicates from "Job" Column
+    df.remove_duplicates("Job")
+
+    # Converts all first names to uppercase
+    df.apply_func("First Name", lambda s: s.upper())  
+
+    # Export data to JSON
+    json_data = df.export_json("ppl.json")
+    print(json_data)
+
+    # counts palindromes in the csv file
+    df.count_valid_palindromes()
+
+    # show the summary of the csv file after analysis
+    df.summerize()
+
 def run_go_binding_test1():
+    # !TODO! not completed yet, was just playing around !!
     library = ctypes.cdll.LoadLibrary('./go_bindings/library.so')
     library.readCSV.restype = None
     # Set return type for the function (since it returns an int)
@@ -71,11 +90,13 @@ def run_go_binding_test1():
     library.readCSV(csv_path)
     print("Valid Palindrome Count: ", result)
 
-
 if __name__ == "__main__":
+
     run_test1()
-    # run_test2()
-    # run_test3()
+    run_test2()
+    run_test3()
+    run_test4()
+    
     # run_go_binding_test1()
    
     # fast_csv.CountValidPalindromes.argtypes = [ctypes.c_char_p]

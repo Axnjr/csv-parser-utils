@@ -8,6 +8,14 @@
 - `aggregate_column()`
 - `count_valid_palindromes()`
 - `write_csv()`
+- `remove_duplicates()`
+- `replace_all_vals()`
+- `reaplace_first_val()`
+- `read_csv()`
+- `summerize()`
+- `export_json()`
+- `apply_func()`
+- `output_processed_csv()`
 
 ## Usage / test cases
 ```py

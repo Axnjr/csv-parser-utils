@@ -1,4 +1,4 @@
-# `CSV_Utils_Py`
+# `CSV_Utils_Py` 
 # Homework task for SWE position at Redhat.
 
 ## Public Methods:
@@ -16,6 +16,11 @@
 - `export_json()`
 - `apply_func()`
 - `output_processed_csv()`
+
+## Private Methods:
+- `_update_csv()`
+- `_validate()`
+- `_load_csv()`
 
 ## Usage / test cases
 ```py
@@ -77,10 +82,37 @@ def run_test3():
     palindrome_count = df.count_valid_palindromes()
     print("Valid Palindromes Count:", palindrome_count)
 
+# ------------------------------------------------------------------------------------------------------------------ #
+
+def run_test4():
+    
+    df = CSV_Utils_Py("./ppl.csv")
+
+    # replace all "First Name": Shelby to Radha
+    df.replace_all_vals("First Name", "Shelby", "Radha")
+
+    # removes duplicates from "Job" Column
+    df.remove_duplicates("Job")
+
+    # Converts all first names to uppercase
+    df.apply_func("First Name", lambda s: s.upper())  
+
+    # Export data to JSON
+    json_data = df.export_json("ppl.json")
+    print(json_data)
+
+    # counts palindromes in the csv file
+    df.count_valid_palindromes()
+
+    # show the summary of the csv file after analysis
+    df.summerize()
+
 if __name__ == "__main__":
     run_test1()
     run_test2()
     run_test3()
+    run_test4()
+
 ```
 
 ## 🦀 Rust implementation comming soon, just for fun and better performance 💪

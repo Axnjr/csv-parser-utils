@@ -115,4 +115,4 @@ if __name__ == "__main__":
 
 ```
 
-## 🦀 Rust implementation comming soon, just for fun and better performance 💪
+## 🦀 `Rust` and `Go` implementation comming soon, just for fun and better performance 💪

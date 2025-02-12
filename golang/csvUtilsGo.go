@@ -11,15 +11,15 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
-	"strings"
 	"strconv"
-	// "math"
-	// "sort"
-	// "encoding/json"
+	"strings"
+	"sort"
 )
 
 type CSV_Utils_Go struct {
@@ -237,6 +237,216 @@ func (c *CSV_Utils_Go) display_csv(num_rows int, add_index_col bool) {
 }
 
 
+// Helper function to determine if a string is numeric
+func isNumeric(s string) bool {
+	if s == "" {
+		return false
+	}
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
+}
+
+
+// Helper function to round float to given precision
+func roundFloat(val float64, precision int) float64 {
+	pow := math.Pow(10, float64(precision))
+	return math.Round(val*pow) / pow
+}
+
+
+// Helper function to compute standard deviation (sample std dev)
+func standardDeviation(vals []float64) float64 {
+	if len(vals) <= 1 {
+		return 0
+	}
+	mean := 0.0
+	for _, v := range vals {
+		mean += v
+	}
+	mean = mean / float64(len(vals))
+	var sumSquares float64
+	for _, v := range vals {
+		sumSquares += (v - mean) * (v - mean)
+	}
+	return math.Sqrt(sumSquares / float64(len(vals)-1))
+}
+
+
+// Helper function to deep copy a 2D slice of strings
+func deepCopy2D(src [][]string) [][]string {
+	dest := make([][]string, len(src))
+	for i, row := range src {
+		dest[i] = make([]string, len(row))
+		copy(dest[i], row)
+	}
+	return dest
+}
+
+
+// Helper function to get first N rows
+func firstNRows(rows [][]string, n int) [][]string {
+	if n > len(rows) {
+		n = len(rows)
+	}
+	return rows[:n]
+}
+
+
+// Helper function to get last N rows
+func lastNRows(rows [][]string, n int) [][]string {
+	if n > len(rows) {
+		n = len(rows)
+	}
+	return rows[len(rows)-n:]
+}
+
+
+// summerize provides a summary of the CSV data.
+func (c *CSV_Utils_Go) summerize(preview_rows int) {
+	/*
+	   Provides a summary of the CSV data, including:
+	   - Number of rows and columns
+	   - Column-wise data types
+	   - Column-wise missing values count
+	   - Unique value count per column
+	   - Most frequent value per column
+	   - Min, Max, Mean, Std Dev for numerical columns
+	   - First and Last few rows
+	*/
+	num_rows := len(c.rows)
+	num_cols := len(c.headers)
+	total_vals := 0
+
+	data_types := make(map[string]map[string]bool)
+	missing_values := make(map[string]int)
+	unique_values := make(map[string]int)
+	column_data := make(map[string][]string)
+	numeric_stats := make(map[string]map[string]interface{})
+	mode_values := make(map[string]string)
+
+	// Initialize maps for headers
+	for _, col := range c.headers {
+		data_types[col] = make(map[string]bool)
+		missing_values[col] = 0
+		unique_values[col] = 0
+		column_data[col] = []string{}
+		numeric_stats[col] = map[string]interface{}{
+			"min":     nil,
+			"max":     nil,
+			"mean":    nil,
+			"std_dev": nil,
+		}
+	}
+
+	// Process each row
+	for _, row := range c.rows {
+		for col_idx, value := range row {
+			col_name := c.headers[col_idx]
+			if value == "" || strings.TrimSpace(value) == "" {
+				missing_values[col_name] += 1
+			} else {
+				total_vals++
+				// All values are strings in Go, so type is always "string"
+				data_types[col_name]["string"] = true
+				unique_values[col_name]++
+				column_data[col_name] = append(column_data[col_name], value)
+			}
+		}
+	}
+
+	// Convert data_types sets to lists
+	data_types_list := make(map[string][]string)
+	for col, typesMap := range data_types {
+		typesList := []string{}
+		for t := range typesMap {
+			typesList = append(typesList, t)
+		}
+		data_types_list[col] = typesList
+	}
+
+	// For each column, compute numeric stats and mode
+	for col, values := range column_data {
+		is_numeric := true
+		numeric_values := []float64{}
+		for _, v := range values {
+			if !isNumeric(v) {
+				is_numeric = false
+				break
+			} else {
+				f, _ := strconv.ParseFloat(v, 64)
+				numeric_values = append(numeric_values, f)
+			}
+		}
+		if is_numeric && len(numeric_values) > 0 {
+			minVal := numeric_values[0]
+			maxVal := numeric_values[0]
+			sum := 0.0
+			for _, num := range numeric_values {
+				if num < minVal {
+					minVal = num
+				}
+				if num > maxVal {
+					maxVal = num
+				}
+				sum += num
+			}
+			meanVal := roundFloat(sum/float64(len(numeric_values)), 2)
+			stdDev := 0.0
+			if len(numeric_values) > 1 {
+				stdDev = roundFloat(standardDeviation(numeric_values), 2)
+			}
+			numeric_stats[col] = map[string]interface{}{
+				"min":     minVal,
+				"max":     maxVal,
+				"mean":    meanVal,
+				"std_dev": stdDev,
+			}
+		}
+		if len(values) > 0 {
+			// Calculate most frequent value using frequency counter
+			freq := make(map[string]int)
+			for _, v := range values {
+				freq[v]++
+			}
+			type kv struct {
+				Key   string
+				Value int
+			}
+			var freqList []kv
+			for k, v := range freq {
+				freqList = append(freqList, kv{k, v})
+			}
+			sort.Slice(freqList, func(i, j int) bool {
+				return freqList[i].Value > freqList[j].Value
+			})
+			if len(freqList) > 0 {
+				mode_values[col] = freqList[0].Key
+			}
+		}
+	}
+
+	summary := map[string]interface{}{
+		"Total Rows:":                 num_rows,
+		"Total Columns:":              num_cols,
+		"Total Values:":               total_vals,
+		"Column Data Types:":          data_types_list,
+		"Missing Values Per Column:":  missing_values,
+		"Unique Values Per Column:":   unique_values,
+		"Most Frequent Value (Mode) Per Column": mode_values,
+		"Numeric Stats":              numeric_stats,
+		"First Few Rows":             firstNRows(c.rows, preview_rows),
+		"Last Few Rows":              lastNRows(c.rows, preview_rows),
+	}
+
+	summaryBytes, err := json.MarshalIndent(summary, "", "    ")
+	if err != nil {
+		fmt.Printf("Error marshalling summary: %v\n", err)
+		return
+	}
+	fmt.Println(string(summaryBytes))
+}
+
+
 func main() {
 	// This main function is provided for testing purposes.
 	// It can be modified as needed to test the functionality of CSV_Utils_Py.
@@ -248,6 +458,6 @@ func main() {
 		return
 	}
 	csvUtil.display_csv(3, true)
-	// !todo => csvUtil.summerize(3)
+	csvUtil.summerize(3)
 
 }

@@ -271,7 +271,7 @@ class CSV_Utils_Py:
             except Exception as e:
                 print(f"Error processing row {row}: {e}")
 
-        self._update_csv(output_file_name, [self.headers] + modified_data)
+        self._update_csv(output_file_name, [self.headers] + modified_data, "apply_func()")
 
         return [self.headers] + modified_data
 

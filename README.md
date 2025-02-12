@@ -92,7 +92,7 @@ def run_test4():
     df.replace_all_vals("First Name", "Shelby", "Radha")
 
     # removes duplicates from "Job" Column
-    df.remove_duplicates("Job")
+    df.remove_duplicates("Job Tittle")
 
     # Converts all first names to uppercase
     df.apply_func("First Name", lambda s: s.upper())  

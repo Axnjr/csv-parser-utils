@@ -447,6 +447,117 @@ func (c *CSV_Utils_Go) summerize(preview_rows int) {
 }
 
 
+// remove_duplicates removes duplicate rows based on the specified column.
+func (c *CSV_Utils_Go) remove_duplicates(column string, output_file_name string) [][]string {
+	/*
+	   remove all duplictae values from the given `column`
+	*/
+
+	fmt.Println("REMOVING DUPS !! DEBUG !")
+
+	col_idx, err := c.get_column_index(column)
+
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+
+	seen := make(map[string]bool)
+	unique_rows := make([][]string, 0)
+
+	for _, row := range c.rows {
+		key := row[col_idx]
+		if !seen[key] {
+			seen[key] = true
+			unique_rows = append(unique_rows, row)
+		}
+	}
+
+	c.rows = unique_rows
+	combined := append([][]string{c.headers}, c.rows...)
+
+	c._update_csv(output_file_name, combined, "remove_duplicates()")
+
+	return combined
+}
+
+
+// replace_first_val replaces the first occurrence of old_val with new_val in the specified column.
+func (c *CSV_Utils_Go) replace_first_val(column string, old_val string, new_val string, output_file_name string) error {
+	col_idx, err := c.get_column_index(column)
+	if err != nil {
+		return err
+	}
+
+	for i := range c.rows {
+		if strings.EqualFold(c.rows[i][col_idx], old_val) {
+			c.rows[i][col_idx] = new_val
+			break
+		}
+	}
+
+	combined := append([][]string{c.headers}, c.rows...)
+	c._update_csv(output_file_name, combined, "`replace_first_val()`")
+	return nil
+}
+
+
+// replace_all_vals replaces all occurrences of old_val with new_val in the specified column.
+func (c *CSV_Utils_Go) replace_all_vals(column string, old_val string, new_val string, output_file_name string) error {
+	/*
+	   Replaces all occurrences of `old_val` with `new_val` in the specified column 
+	   and updates the file or creates new file if given output file name.
+
+	   :param column: Column name where the replacement should occur.
+	   :param old_val: The value to be replaced.
+	   :param new_val: The new value to replace with.
+	   :output_file_name: The new file name in which updated data must be written
+	*/
+	col_idx, err := c.get_column_index(column)
+	if err != nil {
+		return err
+	}
+
+	for i := range c.rows {
+		if strings.EqualFold(c.rows[i][col_idx], old_val) {
+			c.rows[i][col_idx] = new_val
+		}
+	}
+
+	combined := append([][]string{c.headers}, c.rows...)
+	c._update_csv(output_file_name, combined, "`replace_all_vals()`")
+	return nil
+}
+
+
+// is_palindrome is a static method to check if a given word is a palindrome.
+func CSV_Utils_Py_is_palindrome(word string) bool {
+	runes := []rune(word)
+	n := len(runes)
+	for i := 0; i < n/2; i++ {
+		if runes[i] != runes[n-1-i] {
+			return false
+		}
+	}
+	return true
+}
+
+
+// count_valid_palindromes counts palindrome words in the CSV rows.
+func (c *CSV_Utils_Go) count_valid_palindromes() int {
+	count := 0
+	for _, row := range c.rows {
+		for _, word := range row {
+			word = strings.ToUpper(strings.TrimSpace(word))
+			if word != "" && CSV_Utils_Py_is_palindrome(word) {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+
 func main() {
 	// This main function is provided for testing purposes.
 	// It can be modified as needed to test the functionality of CSV_Utils_Py.
@@ -457,7 +568,17 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	csvUtil.display_csv(3, true)
-	csvUtil.summerize(3)
 
+	csvUtil.display_csv(3, true)
+
+	csvUtil.remove_duplicates("Job Title", "./output.csv")
+
+	csvUtil.replace_all_vals("First Name", "Shelby", "Radha", "./output.csv") 
+	// output_file_name if empty then the original csv file is modified
+	csvUtil.replace_first_val("First Name", "Radha", "Kanha", "./output.csv") 
+
+	csvUtil.count_valid_palindromes()
+
+	// show first and last rows of the file
+	csvUtil.summerize(3) 
 }

@@ -158,19 +158,22 @@ func (c *CSV_Utils_Go) _validate(column string) error {
 }
 
 // get_column_index returns the index of the specified column
-func (c *CSV_Utils_Go) get_column_index(column string) (int, error) {
+func (c *CSV_Utils_Go) get_column_index(column string, from_func_name string) int {
 	err := c._validate(column)
 	if err != nil {
 		// requested column not found in the csv file, panic !!
-		// panic(err)
-		return -1, err
+		panic(
+			fmt.Sprintf(
+			"Error: '%s', Check if you have specified the right column name in function: `'%s'`", 
+			err, 
+			from_func_name))
 	}
 	for i, h := range c.headers {
 		if h == column {
-			return i, nil
+			return i
 		}
 	}
-	return -1, errors.New("unexpected error in get_column_index")
+	return -1 // , errors.New("unexpected error in get_column_index")
 }
 
 // display_csv prints the first num_rows of the CSV data.
@@ -445,14 +448,9 @@ func (c *CSV_Utils_Go) remove_duplicates(column string, output_file_name string)
 	   remove all duplictae values from the given `column`
 	*/
 
-	fmt.Println("REMOVING DUPS !! DEBUG !")
+	// fmt.Println("REMOVING DUPS !! DEBUG !")
 
-	col_idx, err := c.get_column_index(column)
-
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
+	col_idx := c.get_column_index(column, "remove_duplicates")
 
 	seen := make(map[string]bool)
 	unique_rows := make([][]string, 0)
@@ -490,13 +488,7 @@ func (c *CSV_Utils_Go) replace_first_val(
 	   :output_file_name: The new file name in which updated data must be written
 	*/
 
-	col_idx, err := c.get_column_index(column)
-
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-		// return err
-	}
+	col_idx := c.get_column_index(column, "replace_first_val")
 
 	for i := range c.rows {
 		if strings.EqualFold(c.rows[i][col_idx], old_val) {
@@ -519,11 +511,7 @@ func (c *CSV_Utils_Go) replace_all_vals(
 
 	/*SAME AS ABOVE FUNCTION*/
 
-	col_idx, err := c.get_column_index(column)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
+	col_idx := c.get_column_index(column, "replace_all_vals")
 
 	for i := range c.rows {
 		if strings.EqualFold(c.rows[i][col_idx], old_val) {
@@ -580,12 +568,7 @@ func (c *CSV_Utils_Go) filter_rows(
 	   :param: `output_file_name`: the current CSV file is updated if not given else a new file is created
 	*/
 
-	col_idx, err := c.get_column_index(column)
-	if err != nil {
-		// cannot continue if column not found
-		panic(err)
-		// return nil, err
-	}
+	col_idx := c.get_column_index(column, "filter_rows")
 
 	filtered_rows := [][]string{c.headers}
 
@@ -610,12 +593,7 @@ func (c *CSV_Utils_Go) sort_csv(
 	   :param: `output_file_name`: If given some name, the sorted CSV data would be written in that file
 	*/
 
-	col_idx, err := c.get_column_index(column)
-	if err != nil {
-		// cannot continue if column not found
-		panic(err)
-		// return nil, err
-	}
+	col_idx := c.get_column_index(column, "sort_csv")
 
 	// make a copy of rows for sorting to avoid modifying original order if needed
 	sorted_rows := make([][]string, len(c.rows))
@@ -633,4 +611,225 @@ func (c *CSV_Utils_Go) sort_csv(
 	combined := [][]string{c.headers}
 	combined = append(combined, sorted_rows...)
 	return combined, nil
+}
+
+
+// # aggregate_column performs aggregation on a numeric column using an operation.
+func (c *CSV_Utils_Go) aggregate_column(column string, operation string) (float64, error) {
+
+	/*
+	Performs operations like: 'sum', 'min', 'max', 'std'
+
+	:param: `column`: column name on which aggregation will be performed
+	:param: `operation`: "sum" | "min" | "max' | "std"(standard deviation)
+	:return: aggregated float value
+	*/
+
+	col_idx := c.get_column_index(column, "aggregate_column")
+
+	values := []float64{}
+
+	for _, row := range c.rows {
+
+		// Check if the value is numeric by attempting conversion
+		valStr := row[col_idx]
+
+		// Remove one dot if present to mimic Python's replace('.', '', 1) for isdigit check
+		valStrForCheck := strings.Replace(valStr, ".", "", 1)
+
+		if _, err := strconv.ParseFloat(valStrForCheck, 64); err == nil {
+			val, err := strconv.ParseFloat(valStr, 64)
+			if err == nil {
+				values = append(values, val)
+			}
+		}
+	}
+
+	if len(values) == 0 {
+		return 0, fmt.Errorf("Column name: `'%s'` has no numeric values", column)
+	}
+
+	switch operation {
+	case "sum":
+		sum := 0.0
+		for _, v := range values {
+			sum += v
+		}
+		return sum, nil
+	case "avg":
+		sum := 0.0
+		for _, v := range values {
+			sum += v
+		}
+		return sum / float64(len(values)), nil
+	case "min":
+		min := values[0]
+		for _, v := range values {
+			if v < min {
+				min = v
+			}
+		}
+		return min, nil
+	case "max":
+		max := values[0]
+		for _, v := range values {
+			if v > max {
+				max = v
+			}
+		}
+		return max, nil
+	case "std":
+		std_dev := standardDeviation(values)
+		return std_dev, nil
+	default:
+		return 0, errors.New("invalid operation. Choose from 'sum', 'avg', 'min', 'max'")
+	}
+}
+
+
+// output_processed_csv writes the current CSV data to the specified output path.
+func (c *CSV_Utils_Go) output_processed_csv(output_path string) {
+
+	if output_path == "" {
+		output_path = c.file_path // Overwrite original file
+	}
+
+	file, err := os.Create(output_path)
+	if err != nil {
+		fmt.Printf("Error writing file: %v\n", err)
+		return
+	}
+
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	_ = writer.Write(c.headers)
+	err = writer.WriteAll(c.rows)
+
+	if err != nil {
+		fmt.Printf("Error writing file: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Data saved to %s\n", output_path)
+}
+
+
+// apply_func applies a provided function to all values in the specified column.
+func (c *CSV_Utils_Go) apply_func(
+	column string, 
+	funcToApply interface{}, 
+	output_file_name string) ([][]string, error) {
+
+	/*
+	Apply a given function to all values in a specified column.
+
+	:param column: Column name to apply function on.
+	:param func: Function to apply.
+	:param output_file_name: Optional filename to save modified data.
+	:return: Modified CSV data as a list of lists.
+	*/
+
+	col_idx := c.get_column_index(column, "apply_func")
+
+	modified_data := deepCopy2D(c.rows)
+
+	for _, row := range modified_data {
+
+		// Using recover to catch any panic during func execution
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					fmt.Printf("Error processing row %v: %v\n", row, r)
+				}
+			}()
+
+			// row[col_idx] = funcToApply(row[col_idx])
+
+			switch f := funcToApply.(type) {
+
+			case func(string) string:
+				row[col_idx] = f(row[col_idx])
+
+			case func(int) int:
+				num, err := strconv.Atoi(row[col_idx])
+				if err == nil {
+					row[col_idx] = strconv.Itoa(f(num))
+				}
+
+			case func(float64) float64:
+				num, err := strconv.ParseFloat(row[col_idx], 64)
+				if err == nil {
+					row[col_idx] = fmt.Sprintf("%f", f(num))
+				} else {
+					fmt.Printf("Skipping non-float value: %v\n", row[col_idx])
+				}
+
+			case func(float32) float32:
+				num, err := strconv.ParseFloat(row[col_idx], 64)
+				if err == nil {
+					row[col_idx] = fmt.Sprintf("%f", f(float32(num)))
+				} else {
+					fmt.Printf("Skipping non-float value: %v\n", row[col_idx])
+				}
+				
+			default:
+				fmt.Printf("Unsupported function type for row %v\n", row)
+			}
+
+		}()
+	}
+
+	combined := append([][]string{c.headers}, modified_data...)
+	c._update_csv(output_file_name, combined, "")
+
+	return combined, nil
+}
+
+
+// export_json converts the CSV data to JSON format and optionally writes it to a file.
+func (c *CSV_Utils_Go) export_json(json_file string) (string, error) {
+
+	/*
+    Convert CSV data to JSON format and optionally save it to a file.
+
+	:param json_file: (Optional) Filename to save JSON data.
+	:return: The JSON data as a string.
+	*/
+
+	data := make([]map[string]string, 0)
+
+	for _, row := range c.rows {
+
+		entry := make(map[string]string)
+
+		for i, header := range c.headers {
+			if i < len(row) {
+				entry[header] = row[i]
+			} else {
+				entry[header] = ""
+			}
+		}
+
+		data = append(data, entry)
+	}
+
+	jsonBytes, err := json.MarshalIndent(data, "", "    ")
+
+	if err != nil {
+		return "", err
+	}
+
+	json_data := string(jsonBytes)
+
+	if json_file != "" {
+		err := os.WriteFile(json_file, []byte(json_data), 0644)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return json_data, nil
 }

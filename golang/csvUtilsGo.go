@@ -1,6 +1,11 @@
 // WORK PENDING
 // NOT COMPLETE
-// IMPLEMENTED A FEW PRIVATE METHODS, THAT'S IT:
+// ALMOST COMPLETE
+
+// PENDING:
+// - export_json()
+// - apply_func()
+// - aggregate_column()
 
 // COMMING SOON !!
 // COMMING SOON !!
@@ -17,9 +22,9 @@ import (
 	"io"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
 
 type CSV_Utils_Go struct {
@@ -29,9 +34,8 @@ type CSV_Utils_Go struct {
 	columns   int
 }
 
-
-// constructor
-func NewCSV_Utils_Py(file_path string) (*CSV_Utils_Go, error) {
+// # constructor
+func new_csv_utils_go(file_path string) (*CSV_Utils_Go, error) {
 	csvUtil := &CSV_Utils_Go{file_path: file_path}
 	headers, rows, columns, err := csvUtil._load_csv()
 	if err != nil {
@@ -42,7 +46,6 @@ func NewCSV_Utils_Py(file_path string) (*CSV_Utils_Go, error) {
 	csvUtil.columns = columns
 	return csvUtil, nil
 }
-
 
 func (c *CSV_Utils_Go) _load_csv() ([]string, [][]string, int, error) {
 	// Check if file exists
@@ -113,9 +116,8 @@ func (c *CSV_Utils_Go) _load_csv() ([]string, [][]string, int, error) {
 	return headers, rows, len(headers), nil
 }
 
-
-// CSV_Utils_Py_write_csv is a static method to write CSV data to a file.
-func CSV_Utils_Py_write_csv(file_path string, data [][]string) {
+// _write_csv is a static method to write CSV data to a file.
+func _write_csv(file_path string, data [][]string) {
 	file, err := os.Create(file_path)
 	if err != nil {
 		fmt.Printf("Error writing file: %v\n", err)
@@ -134,18 +136,16 @@ func CSV_Utils_Py_write_csv(file_path string, data [][]string) {
 	fmt.Printf("Data saved to %s\n", file_path)
 }
 
-
 func (c *CSV_Utils_Go) _update_csv(output_file_name string, data_to_be_written [][]string, op string) {
 	if output_file_name != "" {
-		CSV_Utils_Py_write_csv(output_file_name, data_to_be_written)
+		_write_csv(output_file_name, data_to_be_written)
 		fmt.Println("New updated CSV file: ", output_file_name, " Created. Opeartion: ", op)
 	} else {
 		// update the same CSV File if no output_file provided
-		CSV_Utils_Py_write_csv(c.file_path, data_to_be_written)
+		_write_csv(c.file_path, data_to_be_written)
 		fmt.Println("CSV File updated. Operation: ", op)
 	}
 }
-
 
 // _validate checks if the given column exists in the headers, else returns an error
 func (c *CSV_Utils_Go) _validate(column string) error {
@@ -157,11 +157,12 @@ func (c *CSV_Utils_Go) _validate(column string) error {
 	return fmt.Errorf("%s", fmt.Sprintf("Column '%s' not found in CSV", column))
 }
 
-
 // get_column_index returns the index of the specified column
 func (c *CSV_Utils_Go) get_column_index(column string) (int, error) {
 	err := c._validate(column)
 	if err != nil {
+		// requested column not found in the csv file, panic !!
+		// panic(err)
 		return -1, err
 	}
 	for i, h := range c.headers {
@@ -171,7 +172,6 @@ func (c *CSV_Utils_Go) get_column_index(column string) (int, error) {
 	}
 	return -1, errors.New("unexpected error in get_column_index")
 }
-
 
 // display_csv prints the first num_rows of the CSV data.
 // If add_index_col is true, an extra index column is added.
@@ -209,7 +209,7 @@ func (c *CSV_Utils_Go) display_csv(num_rows int, add_index_col bool) {
 
 	// print_row helper function
 	print_row := func(row []string) {
-	
+
 		formatted_values := make([]string, 0)
 
 		for range row {
@@ -236,7 +236,6 @@ func (c *CSV_Utils_Go) display_csv(num_rows int, add_index_col bool) {
 	}
 }
 
-
 // Helper function to determine if a string is numeric
 func isNumeric(s string) bool {
 	if s == "" {
@@ -246,13 +245,11 @@ func isNumeric(s string) bool {
 	return err == nil
 }
 
-
 // Helper function to round float to given precision
 func roundFloat(val float64, precision int) float64 {
 	pow := math.Pow(10, float64(precision))
 	return math.Round(val*pow) / pow
 }
-
 
 // Helper function to compute standard deviation (sample std dev)
 func standardDeviation(vals []float64) float64 {
@@ -271,7 +268,6 @@ func standardDeviation(vals []float64) float64 {
 	return math.Sqrt(sumSquares / float64(len(vals)-1))
 }
 
-
 // Helper function to deep copy a 2D slice of strings
 func deepCopy2D(src [][]string) [][]string {
 	dest := make([][]string, len(src))
@@ -282,7 +278,6 @@ func deepCopy2D(src [][]string) [][]string {
 	return dest
 }
 
-
 // Helper function to get first N rows
 func firstNRows(rows [][]string, n int) [][]string {
 	if n > len(rows) {
@@ -291,7 +286,6 @@ func firstNRows(rows [][]string, n int) [][]string {
 	return rows[:n]
 }
 
-
 // Helper function to get last N rows
 func lastNRows(rows [][]string, n int) [][]string {
 	if n > len(rows) {
@@ -299,7 +293,6 @@ func lastNRows(rows [][]string, n int) [][]string {
 	}
 	return rows[len(rows)-n:]
 }
-
 
 // summerize provides a summary of the CSV data.
 func (c *CSV_Utils_Go) summerize(preview_rows int) {
@@ -426,16 +419,16 @@ func (c *CSV_Utils_Go) summerize(preview_rows int) {
 	}
 
 	summary := map[string]interface{}{
-		"Total Rows:":                 num_rows,
-		"Total Columns:":              num_cols,
-		"Total Values:":               total_vals,
-		"Column Data Types:":          data_types_list,
-		"Missing Values Per Column:":  missing_values,
-		"Unique Values Per Column:":   unique_values,
+		"Total Rows:":                           num_rows,
+		"Total Columns:":                        num_cols,
+		"Total Values:":                         total_vals,
+		"Column Data Types:":                    data_types_list,
+		"Missing Values Per Column:":            missing_values,
+		"Unique Values Per Column:":             unique_values,
 		"Most Frequent Value (Mode) Per Column": mode_values,
-		"Numeric Stats":              numeric_stats,
-		"First Few Rows":             firstNRows(c.rows, preview_rows),
-		"Last Few Rows":              lastNRows(c.rows, preview_rows),
+		"Numeric Stats":                         numeric_stats,
+		"First Few Rows":                        firstNRows(c.rows, preview_rows),
+		"Last Few Rows":                         lastNRows(c.rows, preview_rows),
 	}
 
 	summaryBytes, err := json.MarshalIndent(summary, "", "    ")
@@ -445,7 +438,6 @@ func (c *CSV_Utils_Go) summerize(preview_rows int) {
 	}
 	fmt.Println(string(summaryBytes))
 }
-
 
 // remove_duplicates removes duplicate rows based on the specified column.
 func (c *CSV_Utils_Go) remove_duplicates(column string, output_file_name string) [][]string {
@@ -481,12 +473,29 @@ func (c *CSV_Utils_Go) remove_duplicates(column string, output_file_name string)
 	return combined
 }
 
+// # replace_first_val replaces the first occurrence of `old_val` with `new_val` in the specified column.
+func (c *CSV_Utils_Go) replace_first_val(
+	column string,
+	old_val string,
+	new_val string,
+	output_file_name string) {
 
-// replace_first_val replaces the first occurrence of old_val with new_val in the specified column.
-func (c *CSV_Utils_Go) replace_first_val(column string, old_val string, new_val string, output_file_name string) error {
+	/*
+	   Replaces all occurrences of `old_val` with `new_val` in the specified column
+	   and updates the file or creates new file if given output file name.
+
+	   :param column: Column name where the replacement should occur.
+	   :param old_val: The value to be replaced.
+	   :param new_val: The new value to replace with.
+	   :output_file_name: The new file name in which updated data must be written
+	*/
+
 	col_idx, err := c.get_column_index(column)
+
 	if err != nil {
-		return err
+		fmt.Println(err)
+		panic(err)
+		// return err
 	}
 
 	for i := range c.rows {
@@ -498,37 +507,35 @@ func (c *CSV_Utils_Go) replace_first_val(column string, old_val string, new_val 
 
 	combined := append([][]string{c.headers}, c.rows...)
 	c._update_csv(output_file_name, combined, "`replace_first_val()`")
-	return nil
+	// return nil
 }
 
-
 // replace_all_vals replaces all occurrences of old_val with new_val in the specified column.
-func (c *CSV_Utils_Go) replace_all_vals(column string, old_val string, new_val string, output_file_name string) error {
-	/*
-	   Replaces all occurrences of `old_val` with `new_val` in the specified column 
-	   and updates the file or creates new file if given output file name.
+func (c *CSV_Utils_Go) replace_all_vals(
+	column string,
+	old_val string,
+	new_val string,
+	output_file_name string) {
 
-	   :param column: Column name where the replacement should occur.
-	   :param old_val: The value to be replaced.
-	   :param new_val: The new value to replace with.
-	   :output_file_name: The new file name in which updated data must be written
-	*/
+	/*SAME AS ABOVE FUNCTION*/
+
 	col_idx, err := c.get_column_index(column)
 	if err != nil {
-		return err
+		fmt.Println(err)
+		panic(err)
 	}
 
 	for i := range c.rows {
 		if strings.EqualFold(c.rows[i][col_idx], old_val) {
 			c.rows[i][col_idx] = new_val
+			break
 		}
 	}
 
 	combined := append([][]string{c.headers}, c.rows...)
 	c._update_csv(output_file_name, combined, "`replace_all_vals()`")
-	return nil
+	// return nil
 }
-
 
 // is_palindrome is a static method to check if a given word is a palindrome.
 func CSV_Utils_Py_is_palindrome(word string) bool {
@@ -541,7 +548,6 @@ func CSV_Utils_Py_is_palindrome(word string) bool {
 	}
 	return true
 }
-
 
 // count_valid_palindromes counts palindrome words in the CSV rows.
 func (c *CSV_Utils_Go) count_valid_palindromes() int {
@@ -557,28 +563,74 @@ func (c *CSV_Utils_Go) count_valid_palindromes() int {
 	return count
 }
 
+// # filter_rows filters rows based on a condition on a specific column.
+// It updates/filters the rows using the provided lambda callback.
+func (c *CSV_Utils_Go) filter_rows(
+	column string,
+	condition func(string) bool,
+	output_file_name string) ([][]string, error) {
 
-func main() {
-	// This main function is provided for testing purposes.
-	// It can be modified as needed to test the functionality of CSV_Utils_Py.
-	// Example usage:
-	
-	csvUtil, err := NewCSV_Utils_Py("C:/Users/yaksh/redhat-test/ppl.csv")
+	/*
+	   updates / filters the specified rows with given lambda callback
+
+	   :param: `column`: the column to be filtered
+
+	   :param: `condition`: the lambda function to apply on column values
+
+	   :param: `output_file_name`: the current CSV file is updated if not given else a new file is created
+	*/
+
+	col_idx, err := c.get_column_index(column)
 	if err != nil {
-		fmt.Println(err)
-		return
+		// cannot continue if column not found
+		panic(err)
+		// return nil, err
 	}
 
-	csvUtil.display_csv(3, true)
+	filtered_rows := [][]string{c.headers}
 
-	csvUtil.remove_duplicates("Job Title", "./output.csv")
+	for _, row := range c.rows {
+		if condition(row[col_idx]) {
+			filtered_rows = append(filtered_rows, row)
+		}
+	}
 
-	csvUtil.replace_all_vals("First Name", "Shelby", "Radha", "./output.csv") 
-	// output_file_name if empty then the original csv file is modified
-	csvUtil.replace_first_val("First Name", "Radha", "Kanha", "./output.csv") 
+	c._update_csv(output_file_name, filtered_rows, "")
+	return filtered_rows, nil
+}
 
-	csvUtil.count_valid_palindromes()
+// # sort_csv sorts the CSV data based on a specific column and writes the sorted data.
+func (c *CSV_Utils_Go) sort_csv(
+	column string,
+	output_file_name string,
+	ascending bool) ([][]string, error) {
 
-	// show first and last rows of the file
-	csvUtil.summerize(3) 
+	/*
+	   sorts the specified `column` of the CSV File and updates or creates a new CSV File
+	   :param: `output_file_name`: If given some name, the sorted CSV data would be written in that file
+	*/
+
+	col_idx, err := c.get_column_index(column)
+	if err != nil {
+		// cannot continue if column not found
+		panic(err)
+		// return nil, err
+	}
+
+	// make a copy of rows for sorting to avoid modifying original order if needed
+	sorted_rows := make([][]string, len(c.rows))
+	copy(sorted_rows, c.rows)
+
+	sort.Slice(sorted_rows, func(i, j int) bool {
+		if ascending {
+			return sorted_rows[i][col_idx] < sorted_rows[j][col_idx]
+		}
+		return sorted_rows[i][col_idx] > sorted_rows[j][col_idx]
+	})
+
+	c._update_csv(output_file_name, sorted_rows, "`sort_csv()`")
+
+	combined := [][]string{c.headers}
+	combined = append(combined, sorted_rows...)
+	return combined, nil
 }

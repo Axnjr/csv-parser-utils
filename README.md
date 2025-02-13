@@ -1,5 +1,5 @@
 # `CSV_Utils_Py` 
-# Homework task for SWE position at Redhat.
+# Homework task for SWE position at Redhat, implemented in both `python` and `golang`.
 
 ## Public Methods:
 - `display_csv()`
@@ -115,4 +115,7 @@ if __name__ == "__main__":
 
 ```
 
-## 🦀 `Rust` and `Go` implementation comming soon, just for fun and better performance 💪
+# Just for fun and better performance 💪
+
+## [`Go` implementation](https://github.com/Axnjr/redhat-test/tree/main/golang)
+## 🦀 `Rust` implementation comming soon

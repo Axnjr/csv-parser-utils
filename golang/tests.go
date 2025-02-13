@@ -50,4 +50,16 @@ func run_test3() {
 	csvUtil.filter_rows("Product", func(s string) bool { return s == "Apple" }, "./filterd_fruits.csv")
 
 	csvUtil.sort_csv("Price", "./sorted_fruits.csv", true)
+
+	sum_of_prices, err := csvUtil.aggregate_column("Price", "sum")
+
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Aggregated sum of prices: ", sum_of_prices)
+	}
+
+	csvUtil.export_json("fruits.json")
+
+	csvUtil.apply_func("Price", func(s float64) float64 { return s + 54.7 }, "./expensive_fruits.csv")
 }

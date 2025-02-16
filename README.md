@@ -1,4 +1,4 @@
-# `CSV_Utils_Py` 
+# `CSV_Utils/py_go` 
 # Homework task for SWE position at Redhat, implemented in both `python` and `golang`.
 
 ## Public Methods:

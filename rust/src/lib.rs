@@ -1,3 +1,6 @@
+/// PENDING !!
+/// BINDINGS COMMING SOON ⚒️👷‍♂️🫷🫸✌️✨
+
 use std::error::Error;
 use std::fs::File; 
 use std::io::{self, BufReader, BufWriter, Write};

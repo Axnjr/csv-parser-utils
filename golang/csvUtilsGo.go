@@ -1,16 +1,3 @@
-// WORK PENDING
-// NOT COMPLETE
-// ALMOST COMPLETE
-
-// PENDING:
-// - export_json()
-// - apply_func()
-// - aggregate_column()
-
-// COMMING SOON !!
-// COMMING SOON !!
-// COMMING SOON !!
-
 package main
 
 import (

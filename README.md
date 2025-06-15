@@ -113,8 +113,3 @@ if __name__ == "__main__":
     run_test4()
 
 ```
-
-# Just for fun and better performance 💪
-
-## [`Go` implementation](https://github.com/Axnjr/redhat-test/tree/main/golang)
-## 🦀 `Rust` implementation comming soon
